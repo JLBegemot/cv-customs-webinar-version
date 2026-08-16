@@ -81,6 +81,34 @@ async def set_password_hash(
     await session.flush()
 
 
+async def update_user_email(
+    session: AsyncSession, *, user_id: uuid.UUID, email: str
+) -> None:
+    await session.execute(update(User).where(User.id == user_id).values(email=email))
+    await session.flush()
+
+
+async def set_consent_given_at(
+    session: AsyncSession, *, user_id: uuid.UUID, at: datetime
+) -> None:
+    await session.execute(
+        update(User).where(User.id == user_id).values(consent_given_at=at)
+    )
+    await session.flush()
+
+
+async def set_cross_border_consent_at(
+    session: AsyncSession, *, user_id: uuid.UUID, at: datetime | None
+) -> None:
+    """``at=None`` clears the mark — cross-border consent is revocable
+    without touching the account, unlike the primary consent."""
+
+    await session.execute(
+        update(User).where(User.id == user_id).values(cross_border_consent_at=at)
+    )
+    await session.flush()
+
+
 async def hard_delete_user(session: AsyncSession, user_id: uuid.UUID) -> bool:
     """Permanently delete user and all associated data (resume rows cascade).
 
@@ -218,8 +246,12 @@ async def get_user_personal_data(session: AsyncSession, user_id: uuid.UUID) -> d
         "user": {
             "id": str(user.id),
             "email": user.email,
-            "consent_given_at": user.consent_given_at.isoformat() if user.consent_given_at else None,
-            "cross_border_consent_at": user.cross_border_consent_at.isoformat() if user.cross_border_consent_at else None,
+            "consent_given_at": user.consent_given_at.isoformat()
+            if user.consent_given_at
+            else None,
+            "cross_border_consent_at": user.cross_border_consent_at.isoformat()
+            if user.cross_border_consent_at
+            else None,
             "created_at": user.created_at.isoformat(),
         },
         "resumes": [
