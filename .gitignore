@@ -1,0 +1,250 @@
+# ============================================
+# Python
+# ============================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+	
+# Allow frontend lib (mistakenly matched by Python `lib/` rule above)
+!frontend/src/lib/
+!frontend/src/lib/**
+
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+.env
+.venv/
+venv/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ruff
+.ruff_cache/
+
+# uv
+uv.lock
+.uv/
+
+# ============================================
+# Node.js / Frontend
+# ============================================
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# Environment variables
+.env.local
+.env.*.local
+set-env.sh
+.env
+*.env
+
+# Testing
+coverage/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# ============================================
+# Terraform
+# ============================================
+# Local .terraform directories
+**/.terraform/
+*.terraform.lock.hcl
+
+# Terraform plan files
+*.tfplan
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# Variables files (except example)
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+# Несекретные ID dev-окружения — коммитятся сознательно
+!dev.auto.tfvars
+
+# Выгрузки логов CI для локального анализа
+ci_logs/
+
+# ============================================
+# Docker
+# ============================================
+# Docker artifacts
+*.pid
+docker-compose.override.yml
+docker-compose.*.yml
+
+# ============================================
+# IDE / Editor
+# ============================================
+# Visual Studio Code
+.vscode/
+.history/
+*.code-workspace
+
+# IntelliJ / PyCharm / WebStorm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================
+# OS generated files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ============================================
+# Logs and databases
+# ============================================
+*.log
+*.sql
+*.sqlite
+*.db
+
+# ============================================
+# Secrets / sensitive data
+# ============================================
+*.pem
+*.key
+*.crt
+*.p12
+.secrets/
+secrets/
+*.secret
+secrets.yaml
+.secrets.yaml
+
+# ============================================
+# CI / CD
+# ============================================
+.sourcecraft/local/
+.sourcecraft/cache/
+
+# ============================================
+# Temporary files
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.backup
+.cache/
+.cache_temp/
+
+# ============================================
+# Project specific
+# ============================================
+# Backend
+backend/.env
+backend/.env.*
+backend/secrets/
+backend/staticfiles/
+backend/media/
+
+# Frontend
+frontend/.env
+frontend/.env.*
+frontend/.next/
+frontend/out/
+
+# Terraform plans
+terraform/**/terraform.tfplan
+terraform/**/terraform.tfstate
+terraform/**/terraform.tfstate.backup
+
+# Test reports
+test-reports/
+bandit-report.json
+safety-report.json
+
+# Env for Terraform local development
+set-env.sh
+test.sh
+
+# Рабочее состояние пайплайна /api-tests — в репозиторий не идёт.
+.claude/tmp/
+.smoke-logs/

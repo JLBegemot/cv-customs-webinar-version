@@ -1,0 +1,22 @@
+# Контекст сборки backend/Dockerfile (CI и локальный compose) — корень репо.
+# Без этого файла демону при каждой сборке уезжают .git, frontend
+# (в CI-workspace — вплоть до node_modules от параллельного npm ci) и
+# terraform — сотни лишних МБ. Образу нужны только: ci/yandex-cloud-ca.pem,
+# pyproject.toml, uv.lock, README.md, alembic.ini, alembic/, backend/.
+.git
+.venv
+.smoke-logs
+.sourcecraft
+.pytest_cache
+frontend
+terraform
+plans
+docs
+tests
+scripts
+**/node_modules
+**/__pycache__
+*.md
+!README.md
+.env
+.env.*

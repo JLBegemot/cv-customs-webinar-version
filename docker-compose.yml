@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cv_customs
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # One-shot job that creates the dev bucket. Exits 0 once MinIO is ready.
+  minio-bootstrap:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >-
+      /bin/sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb -p local/cv-customs-dev || true &&
+        mc anonymous set download local/cv-customs-dev || true
+      "
+
+  # Backend API service
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    # Миграции перед стартом: fresh volume поднимается без ручного
+    # `alembic upgrade head`.
+    command: ["sh", "-c", "alembic upgrade head && exec uvicorn cv_customs.main:app --host 0.0.0.0 --port 8000"]
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=dev
+      # Валидатор в config.py требует непустой секрет ≥32 символов уже на
+      # импорте — без него контейнер уходит в crash-loop. Локальное значение
+      # переопределяется через JWT_SECRET в окружении хоста.
+      - JWT_SECRET=${JWT_SECRET:-local-dev-only-jwt-secret-0123456789abcdef}
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/cv_customs
+      - S3_ENDPOINT_URL=http://minio:9000
+      - S3_ACCESS_KEY=minioadmin
+      - S3_SECRET_KEY=minioadmin
+      - S3_BUCKET=cv-customs-dev
+      - S3_REGION=us-east-1
+      - APP_BASE_URL=http://localhost:8000
+      - CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      # curl отсутствует в slim-образе — проверяем через stdlib
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  pgdata:
+  miniodata:
