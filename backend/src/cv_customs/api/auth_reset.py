@@ -17,7 +17,7 @@ Two endpoints::
 
 The reset link points at ``APP_BASE_URL/reset-password/{token}``.
 
-Simplified (webinar) edition: tokens live in process memory — the service
+Tokens live in process memory — the service
 is local-only and single-process, so a restart simply invalidates any
 outstanding reset links.
 """

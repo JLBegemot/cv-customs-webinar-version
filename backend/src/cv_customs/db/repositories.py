@@ -1,4 +1,4 @@
-"""Repository helpers — simplified (webinar) edition.
+"""Repository helpers.
 
 Users, audit log and uploaded resume files. All helpers ``flush`` but never
 ``commit`` — transaction boundaries belong to the request handlers.

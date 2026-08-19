@@ -1,4 +1,4 @@
-# Backend-образ упрощённого сервиса: только web (uvicorn).
+# Backend-образ сервиса: только web (uvicorn).
 FROM python:3.12-slim
 
 WORKDIR /app

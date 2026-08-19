@@ -1,8 +1,6 @@
 """FastAPI app: REST API for auth, file upload and user settings.
 
-Simplified (webinar) edition — local-only service. The SPA mount, LLM
-orchestration, Redis/arq queue and rate limiting from the full cv-customs
-service are gone; what remains is a plain REST API over Postgres + S3.
+Webinar edition — a local-only, plain REST API over Postgres + S3.
 """
 
 from contextlib import asynccontextmanager
@@ -44,7 +42,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="CV Customs (webinar edition)",
-    description="Simplified CV storage service: auth, file upload, user settings",
+    description="CV storage service: auth, file upload, user settings",
     lifespan=lifespan,
 )
 
@@ -57,13 +55,15 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-app.include_router(auth_router)          # /api/auth/* — email/password (the only sign-in method)
-app.include_router(auth_v1_router)       # /api/v1/auth/{register,login,logout}
-app.include_router(auth_reset_router)    # /api/v1/auth/password/reset/{request,confirm}
-_auth_mfa.mount_if_enabled(app)          # /api/v1/auth/mfa/* — gated by FEATURE_MFA
-app.include_router(legal_router)         # /api/legal/*
-app.include_router(user_router)          # /api/user/* — profile, consent, account deletion
-app.include_router(resumes_router)       # /api/v1/resumes — uploaded files (metadata + blob)
+app.include_router(
+    auth_router
+)  # /api/auth/* — email/password (the only sign-in method)
+app.include_router(auth_v1_router)  # /api/v1/auth/{register,login,logout}
+app.include_router(auth_reset_router)  # /api/v1/auth/password/reset/{request,confirm}
+_auth_mfa.mount_if_enabled(app)  # /api/v1/auth/mfa/* — gated by FEATURE_MFA
+app.include_router(legal_router)  # /api/legal/*
+app.include_router(user_router)  # /api/user/* — profile, consent, account deletion
+app.include_router(resumes_router)  # /api/v1/resumes — uploaded files (metadata + blob)
 
 
 @app.get("/health", tags=["infra"], include_in_schema=False)

@@ -13,7 +13,7 @@ Three endpoints are shipped *behind* ``FEATURE_MFA``:
 * ``POST /api/v1/auth/mfa/recovery-codes/regenerate`` — rotate the
   10 one-time recovery codes. We only return the *plaintext* codes
   once, directly in the response; the stored payload is a SHA-256 hash
-  list. Simplified (webinar) edition: the hashes live in process memory,
+  list. The hashes live in process memory,
   so a restart drops them — acceptable for a local-only service.
 
 When ``FEATURE_MFA`` is ``false`` the entire router is **not mounted**

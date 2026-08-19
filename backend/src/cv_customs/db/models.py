@@ -1,11 +1,10 @@
-"""SQLAlchemy models — simplified (webinar) edition.
+"""SQLAlchemy models (webinar edition).
 
 Three tables only:
 
 * ``users``      — email/password accounts + 152-FZ consent timestamps.
 * ``audit_log``  — immutable log of personal-data access events.
-* ``resumes``    — uploaded files: metadata row + S3 blob key. No parsing,
-                   no structured content, no versions.
+* ``resumes``    — uploaded files: metadata row + S3 blob key, stored as-is.
 """
 
 from __future__ import annotations
@@ -27,8 +26,12 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     email: Mapped[str | None] = mapped_column(unique=True)
     password_hash: Mapped[str | None]
-    consent_given_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
-    cross_border_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    consent_given_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    cross_border_consent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     # TOTP secret, nullable — used by the FEATURE_MFA-gated endpoints.
@@ -60,8 +63,7 @@ class AuditLog(Base):
 class Resume(Base):
     """An uploaded resume file: metadata row + pointer to the S3 blob.
 
-    The simplified service stores files as-is — there is no text
-    extraction and no structured content. ``blob_key`` points at
+    Files are stored as-is. ``blob_key`` points at
     ``resumes/{resume_id}/original.{ext}`` in the configured bucket.
     """
 

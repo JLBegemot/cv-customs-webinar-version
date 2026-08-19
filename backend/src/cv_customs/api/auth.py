@@ -1,8 +1,7 @@
 """Authentication endpoints + shared helpers (email + password only).
 
-Simplified (webinar) edition — local-only service, so there is no rate
-limiting and no email-verification loop: registration activates the account
-immediately and returns a JWT.
+Local-only service. Registration activates the account immediately and
+returns a JWT — there is no email-verification loop.
 
 * this file        — legacy ``/api/auth/{register,login}`` routes +
                      shared helpers (JWT, password hashing,
@@ -187,7 +186,7 @@ async def register(
     )
     await session.commit()
 
-    # No email-verification loop in the simplified edition — the account is
+    # No email-verification loop — the account is
     # live immediately.
     token = create_access_token(user.id)
     return user_response(user, token)

@@ -15,15 +15,13 @@ tests live in the repo-root `tests/`** (`testpaths = ["tests"]`,
 
 ## What this service does
 
-A Python 3.12 FastAPI service backed by PostgreSQL (async SQLAlchemy) —
-the **simplified (webinar) edition** of cv-customs, meant for local-only
-runs. Signed-in users upload résumé files (PDF/DOCX), which are stored
-**as-is**: metadata row in Postgres + blob in S3/MinIO. There is no
-parsing, no LLM pipeline, no background jobs, no Redis and no rate
-limiting — that all lives in the full cv-customs repo, not here. The
-service also exposes auth (register, login, password reset, optional TOTP
-MFA), legal, and account endpoints. Sign-in is **email + password only**,
-registration activates the account immediately (no email verification).
+A Python 3.12 FastAPI service backed by PostgreSQL (async SQLAlchemy),
+meant for local-only runs. Signed-in users upload résumé files (PDF/DOCX),
+which are stored **as-is**: metadata row in Postgres + blob in S3/MinIO.
+The service also exposes auth (register, login, password reset, optional
+TOTP MFA), legal, and account endpoints. Sign-in is **email + password
+only**, registration activates the account immediately (no email
+verification).
 
 ## Work in this order
 
@@ -80,7 +78,7 @@ Regenerate it whenever routes or schemas change:
 - Python 3.12
 - FastAPI ≥ 0.115, Uvicorn ≥ 0.32
 - SQLAlchemy 2.0 with `asyncio`, asyncpg ≥ 0.30 (aiosqlite for tests)
-- Pydantic (v2, via `pydantic-ai` for agent schemas)
+- Pydantic v2 (schemas inline in routers; `pydantic-settings` for config)
 - Alembic ≥ 1.14
 - `python-jose[cryptography]` for JWT (HS256), `bcrypt` for passwords
 - pytest ≥ 8.4 + pytest-asyncio for tests
@@ -279,10 +277,8 @@ must work anonymously or switch on auth state, take an optional auth
 dependency instead of branching on `Authorization: None` inside a
 "protected" handler.
 
-There is **no rate limiting** in this edition — the service is local-only
-by design. Do not add it back piecemeal; that decision belongs to the full
-cv-customs repo. The client IP for audit logs comes from
-`infra/request.client_ip`, which honours `X-Forwarded-For`.
+The client IP for audit logs comes from `infra/request.client_ip`,
+which honours `X-Forwarded-For`.
 
 ## Security checklist
 

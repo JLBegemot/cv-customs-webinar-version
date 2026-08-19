@@ -1,13 +1,11 @@
 # Профили ручек cv-customs (webinar edition)
 
-Транспорт один — REST поверх FastAPI. В упрощённой версии сервиса остался
-один профиль — `http`: LLM-агентов, arq-джобов, SSE-стриминга и rate-limit'ов
-здесь нет. Профиль ручки объявляется в шапке плана и в поле `profile` каждого
-кейса в `cases.yaml`.
+Транспорт один — REST поверх FastAPI, профиль один — `http`. Профиль ручки
+объявляется в шапке плана и в поле `profile` каждого кейса в `cases.yaml`.
 
 | Профиль | Признак | Примеры в репозитории |
 |---|---|---|
-| `http` | обычная синхронная ручка | `tests/api/test_user_endpoints.py`, `tests/api/test_resume_upload.py` |
+| `http` | обычная синхронная ручка | `tests/api/test_user_account.py`, `tests/api/test_resume_upload.py` |
 
 ---
 
