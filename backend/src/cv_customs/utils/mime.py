@@ -1,9 +1,8 @@
 """Server-side MIME sniffing for resume uploads (Phase-1 MVP, Week 3).
 
 Clients can lie about ``Content-Type`` and ``filename`` extensions. The
-uploaded blob is what's going to end up in S3 and (indirectly) in the
-LLM prompt, so we need the server to decide what kind of file it really
-is before we trust it.
+uploaded blob is what's going to end up in S3, so we need the server to
+decide what kind of file it really is before we trust it.
 
 The plan originally called for ``python-magic``, which pulls in a C
 dependency (``libmagic``) that's finicky on Alpine/Lambda. A tiny magic-

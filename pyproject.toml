@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "cv-customs-webinar-version"
 version = "0.1.0"
-description = "Simplified CV storage service: auth, file upload, user settings (local-only)"
+description = "CV storage service: auth, file upload, user settings (local-only)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",

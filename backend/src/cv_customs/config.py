@@ -1,8 +1,6 @@
 """Typed application settings loaded via pydantic-settings.
 
-Simplified (webinar) edition: the service keeps only auth, file upload and
-user-settings surfaces and runs locally. All LLM, Redis, rate-limit and
-email-verification configuration has been removed.
+Webinar edition: auth, file upload and user-settings surfaces, local-only runs.
 """
 
 from __future__ import annotations
@@ -12,6 +10,7 @@ from typing import Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 # Walk up from this file looking for the repo-root ``.env`` file. Hard-coding
 # ``parents[N]`` is brittle: the walk stops at the first directory that
@@ -93,22 +92,16 @@ class Settings(BaseSettings):
     # ---- Email / Yandex Cloud Postbox ---------------------------------
     # Postbox speaks the AWS SES v2 API. With no keys configured the email
     # client runs in console/log mode — fine for local-only use.
-    yc_postbox_access_key_id: str = Field(
-        default="", alias="YC_POSTBOX_ACCESS_KEY_ID"
-    )
+    yc_postbox_access_key_id: str = Field(default="", alias="YC_POSTBOX_ACCESS_KEY_ID")
     yc_postbox_secret_access_key: str = Field(
         default="", alias="YC_POSTBOX_SECRET_ACCESS_KEY"
     )
-    yc_postbox_region: str = Field(
-        default="ru-central1", alias="YC_POSTBOX_REGION"
-    )
+    yc_postbox_region: str = Field(default="ru-central1", alias="YC_POSTBOX_REGION")
     yc_postbox_endpoint_url: str = Field(
         default="https://postbox.cloud.yandex.net",
         alias="YC_POSTBOX_ENDPOINT_URL",
     )
-    from_email: str = Field(
-        default="no-reply@cv-customs.local", alias="FROM_EMAIL"
-    )
+    from_email: str = Field(default="no-reply@cv-customs.local", alias="FROM_EMAIL")
     from_name: str = Field(default="CV Customs", alias="FROM_NAME")
 
     # ---- Password reset ------------------------------------------------
@@ -174,6 +167,8 @@ S3_BUCKET: str = settings.s3_bucket
 S3_REGION: str = settings.s3_region
 
 DATA_RETENTION_SOFT_DELETED_DAYS: int = settings.data_retention_soft_deleted_days
-DATA_RETENTION_INACTIVE_ACCOUNT_DAYS: int = settings.data_retention_inactive_account_days
+DATA_RETENTION_INACTIVE_ACCOUNT_DAYS: int = (
+    settings.data_retention_inactive_account_days
+)
 
 ENVIRONMENT: str = settings.environment

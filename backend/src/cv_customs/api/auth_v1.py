@@ -41,14 +41,13 @@ async def login_v1(
 async def logout_v1(
     credentials: HTTPAuthorizationCredentials = Depends(_auth._bearer),
 ):
-    """Client-side JWT invalidation — server-side blocklist ships Week 6.
+    """Client-side JWT invalidation.
 
-    We still expose the endpoint so SPAs can ``POST`` to it to trigger
-    audit-log "logout" events once Week 6 lands. Today it is a no-op; the
-    client is expected to discard the access token on its side.
+    We still expose the endpoint so SPAs have a stable logout URL. It is
+    a no-op; the client is expected to discard the access token on its side.
     """
 
-    # Intentional no-op: there is no server-side session store in the
-    # simplified edition. Returning 204 keeps the client contract stable —
+    # Intentional no-op: there is no server-side session store.
+    # Returning 204 keeps the client contract stable —
     # the client is expected to discard the access token on its side.
     return None

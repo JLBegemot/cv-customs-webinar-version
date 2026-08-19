@@ -1,4 +1,4 @@
-"""Infrastructure adapters (Redis, object storage, logging, email).
+"""Infrastructure adapters (object storage, logging, email, request helpers).
 
 Introduced in Week 1 of the Phase-1 MVP plan. Each module exposes a small
 helper that wires its client into ``app.state`` during FastAPI ``lifespan``

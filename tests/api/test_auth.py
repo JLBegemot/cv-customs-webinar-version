@@ -58,7 +58,7 @@ async def _audit_actions(session_factory, action: str) -> list[AuditLog]:
 async def test_register_returns_usable_token_for_active_account(
     client, session_factory
 ):
-    """В упрощённой редакции нет подтверждения почты — аккаунт живой сразу,
+    """Подтверждения почты нет — аккаунт живой сразу,
     поэтому выданный токен обязан открывать закрытую ручку без доп. шагов."""
 
     resp = client.post("/api/auth/register", json=_register_payload())
@@ -270,7 +270,7 @@ async def test_v1_register_and_login_mirror_legacy_routes(client):
 
 
 async def test_logout_is_a_no_op_204(client, make_user, auth_headers):
-    """Серверного блоклиста в упрощённой редакции нет: ручка отвечает 204,
+    """Серверного блоклиста нет: ручка отвечает 204,
     а токен намеренно остаётся рабочим — его выбрасывает клиент."""
 
     user_id = await make_user("bye@example.com")

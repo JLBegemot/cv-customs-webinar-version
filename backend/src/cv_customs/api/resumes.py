@@ -1,7 +1,6 @@
-"""Uploaded-resume file storage (simplified webinar edition).
+"""Uploaded-resume file storage.
 
-The service stores resume files **as-is** — there is no text extraction,
-no structured content and no versioning. The surface is a plain file store:
+The service stores resume files **as-is**. The surface is a plain file store:
 
 * ``POST   /api/v1/resumes/upload``        — validate + store a PDF/DOCX
 * ``GET    /api/v1/resumes``               — list the user's files

@@ -52,14 +52,14 @@ uv run python scripts/openapi_snapshot.py --check
 
 | Что | Правило |
 |---|---|
-| Свой `create_async_engine` / `FakeRedis` / `dependency_overrides` в тест-файле | FIXT-001 |
+| Свой `create_async_engine` / `dependency_overrides` в тест-файле | FIXT-001 |
 | Присваивание `app.state.*` руками | FIXT-004 |
 | Ассерт только на статус-код, тело не проверено | ASSERT-001 |
 | `assert resp.status_code == 200` без `resp.text` | ASSERT-002 |
-| Агент подменён только в одном из двух модулей | MOCK-004 |
-| Мок репозитория или сервиса | MOCK-002 |
+| Подмена не через `monkeypatch` или `build_client(...)` | MOCK-005 |
+| Мок репозитория или хендлера | MOCK-002 |
 | Нет теста на чужой объект, либо ожидается 403 вместо 404 | AUTH-002 |
-| 429 проверен без `Retry-After` | RATE-003 |
+| Побочный эффект не проверен у источника (БД, `email_client.sent`, fake-S3) | ASSERT-004 |
 | Тавтология или тест без ассертов | FORBID-005 |
 | Новый тест там, где сценарий уже поднят существующим | FORBID-009 |
 
@@ -84,7 +84,7 @@ uv run python scripts/openapi_snapshot.py --check
 
 ### major
 - **ASSERT-001** `tests/api/test_foo.py:88` — проверяется только код 200, тело ответа
-  не смотрится. Что сделать: добавить ассерт на `scores.total` — ровно это требование
+  не смотрится. Что сделать: добавить ассерт на `size_bytes` — ровно это требование
   и проверяется кейсом.
 
 ### minor
