@@ -64,9 +64,7 @@ class S3Client:
         if content_type:
             extra["ContentType"] = content_type
         async with self._client_cm() as client:
-            await client.put_object(
-                Bucket=self.bucket, Key=key, Body=body, **extra
-            )
+            await client.put_object(Bucket=self.bucket, Key=key, Body=body, **extra)
         return key
 
     async def get_object(self, key: str) -> bytes:
@@ -87,9 +85,7 @@ class S3Client:
         async with self._client_cm() as client:
             await client.delete_object(Bucket=self.bucket, Key=key)
 
-    async def get_presigned_url(
-        self, key: str, expires_in_seconds: int = 300
-    ) -> str:
+    async def get_presigned_url(self, key: str, expires_in_seconds: int = 300) -> str:
         """Return a time-limited download URL for ``{bucket}/{key}``."""
 
         async with self._client_cm() as client:

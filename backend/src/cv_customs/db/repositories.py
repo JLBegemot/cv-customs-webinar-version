@@ -218,8 +218,12 @@ async def get_user_personal_data(session: AsyncSession, user_id: uuid.UUID) -> d
         "user": {
             "id": str(user.id),
             "email": user.email,
-            "consent_given_at": user.consent_given_at.isoformat() if user.consent_given_at else None,
-            "cross_border_consent_at": user.cross_border_consent_at.isoformat() if user.cross_border_consent_at else None,
+            "consent_given_at": user.consent_given_at.isoformat()
+            if user.consent_given_at
+            else None,
+            "cross_border_consent_at": user.cross_border_consent_at.isoformat()
+            if user.cross_border_consent_at
+            else None,
             "created_at": user.created_at.isoformat(),
         },
         "resumes": [

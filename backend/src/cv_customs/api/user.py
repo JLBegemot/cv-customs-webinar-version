@@ -29,13 +29,18 @@ class UserMeResponse(BaseModel):
 # GET /api/user/me
 # ---------------------------------------------------------------------------
 
+
 @router.get("/me")
 async def get_me(user: User = Depends(get_current_user)) -> UserMeResponse:
     return UserMeResponse(
         id=str(user.id),
         email=user.email,
-        consent_given_at=user.consent_given_at.isoformat() if user.consent_given_at else None,
-        cross_border_consent_at=user.cross_border_consent_at.isoformat() if user.cross_border_consent_at else None,
+        consent_given_at=user.consent_given_at.isoformat()
+        if user.consent_given_at
+        else None,
+        cross_border_consent_at=user.cross_border_consent_at.isoformat()
+        if user.cross_border_consent_at
+        else None,
         created_at=user.created_at.isoformat(),
     )
 
@@ -43,6 +48,7 @@ async def get_me(user: User = Depends(get_current_user)) -> UserMeResponse:
 # ---------------------------------------------------------------------------
 # GET /api/user/personal-data  (152-FZ art. 14 — right of access)
 # ---------------------------------------------------------------------------
+
 
 @router.get("/personal-data")
 async def get_personal_data(
@@ -67,6 +73,7 @@ async def get_personal_data(
 # POST /api/user/revoke-consent  (152-FZ art. 9 p. 2 — consent revocation)
 # ---------------------------------------------------------------------------
 
+
 class RevokeConsentRequest(BaseModel):
     confirm: bool = False
 
@@ -79,7 +86,9 @@ async def revoke_consent(
     user: User = Depends(get_current_user),
 ):
     if not body.confirm:
-        raise HTTPException(422, "You must confirm consent revocation by setting confirm=true")
+        raise HTTPException(
+            422, "You must confirm consent revocation by setting confirm=true"
+        )
 
     await repo.create_audit_log(
         session,
@@ -111,6 +120,7 @@ async def revoke_consent(
 # DELETE /api/user/account  (152-FZ art. 21 — right to erasure)
 # ---------------------------------------------------------------------------
 
+
 class DeleteAccountRequest(BaseModel):
     confirm: bool = False
 
@@ -123,7 +133,9 @@ async def delete_account(
     user: User = Depends(get_current_user),
 ):
     if not body.confirm:
-        raise HTTPException(422, "You must confirm account deletion by setting confirm=true")
+        raise HTTPException(
+            422, "You must confirm account deletion by setting confirm=true"
+        )
 
     user_id_str = str(user.id)
 
@@ -151,4 +163,7 @@ async def delete_account(
     await session.commit()
 
     log.info("Account deleted: user_id=%s", user_id_str)
-    return {"ok": True, "message": "Account and all associated data permanently deleted"}
+    return {
+        "ok": True,
+        "message": "Account and all associated data permanently deleted",
+    }

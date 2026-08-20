@@ -62,7 +62,8 @@ alembic/                  # одна baseline-миграция: users, audit_log
 tests/                    # pytest; правила — docs/test-rules.md
 docs/openapi.json         # снапшот контракта
 scripts/                  # openapi_snapshot, validate_cases, smoke-local
-.claude/                  # скиллы (/api-tests, /ship), сабагенты, хуки
+.claude/                  # скиллы (/api-tests, /ship, python-backend-fastapi),
+                          # сабагенты, хуки
 ```
 
 Генерация API-тестов — скилл `/api-tests` (согласование кейсов → cases.yaml →
