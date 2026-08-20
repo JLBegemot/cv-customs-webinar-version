@@ -43,15 +43,12 @@ dev = [
     "aiosqlite>=0.20.0",
     "reportlab>=4.2.0",
     "ruff>=0.8.0",            # formatter, вызывается хуком PostToolUse
+    "pyyaml>=6.0",            # scripts/validate_cases.py читает cases.yaml
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-# `case` — связь с тест-планом в plans/ (TC-NNN).
-markers = [
-    "case(id): идентификатор кейса из тест-плана, например 'TC-004'",
-]
 
 [tool.ruff]
 line-length = 88

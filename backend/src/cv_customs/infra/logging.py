@@ -85,18 +85,14 @@ class RequestIdMiddleware:
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
-    async def __call__(
-        self, scope: Scope, receive: Receive, send: Send
-    ) -> None:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
         headers = dict(scope.get("headers") or [])
         incoming = headers.get(self.HEADER_NAME)
-        request_id = (
-            incoming.decode("latin-1") if incoming else uuid.uuid4().hex
-        )
+        request_id = incoming.decode("latin-1") if incoming else uuid.uuid4().hex
 
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(request_id=request_id)
@@ -104,9 +100,7 @@ class RequestIdMiddleware:
         async def send_with_header(message: dict[str, Any]) -> None:
             if message["type"] == "http.response.start":
                 raw_headers = list(message.get("headers") or [])
-                raw_headers.append(
-                    (self.HEADER_NAME, request_id.encode("latin-1"))
-                )
+                raw_headers.append((self.HEADER_NAME, request_id.encode("latin-1")))
                 message["headers"] = raw_headers
             await send(message)
 

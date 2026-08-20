@@ -117,9 +117,7 @@ async def request_reset(
 
         email_client = getattr(request.app.state, "email", None)
         if email_client is not None:
-            reset_url = (
-                f"{settings.app_base_url.rstrip('/')}/reset-password/{token}"
-            )
+            reset_url = f"{settings.app_base_url.rstrip('/')}/reset-password/{token}"
             await email_client.send_template(
                 template_alias="password-reset",
                 to=user.email,
@@ -189,7 +187,9 @@ async def confirm_reset(
 
     ok = await _consume_token(request, user.id, body.token)
     if not ok:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid or expired reset token.")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Invalid or expired reset token."
+        )
 
     new_hash = bcrypt.hashpw(body.new_password.encode(), bcrypt.gensalt()).decode()
     await repo.set_password_hash(session, user_id=user.id, password_hash=new_hash)

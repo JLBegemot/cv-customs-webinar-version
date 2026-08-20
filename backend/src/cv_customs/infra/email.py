@@ -184,7 +184,5 @@ def create_email_client() -> EmailClient:
             from_email=settings.from_email,
             from_name=settings.from_name,
         )
-    log.info(
-        "email: YC_POSTBOX_ACCESS_KEY_ID / SECRET unset — using NullEmailClient"
-    )
+    log.info("email: YC_POSTBOX_ACCESS_KEY_ID / SECRET unset — using NullEmailClient")
     return NullEmailClient()

@@ -159,9 +159,19 @@ Why this shape:
 ### 3) Error strategy
 
 Raise `HTTPException(status_code, detail)` at the handler boundary. The
-detail must be a short, stable string (it is part of the client contract —
-clients match on it). Never include SQL errors, tracebacks, or internal
-identifiers.
+detail is part of the client contract, so it has to be stable. Two shapes
+are in use and both are load-bearing:
+
+- a short, stable string for plain domain errors — `"Resume not found"`;
+- a dict with a typed `code` when the client must branch on the reason or
+  needs machine-readable context —
+  `{"code": "UPLOAD_TOO_LARGE", "max_bytes": max_bytes}`.
+
+FastAPI wraps whatever you pass, so the typed form goes out as
+`{"detail": {"code": ...}}` and tests assert on
+`resp.json()["detail"]["code"]`. Prefer the typed dict for any new
+validation error a client has to handle programmatically. Never include
+SQL errors, tracebacks, or internal identifiers in either shape.
 
 ```python
 resume = await repo.get_resume(session, resume_id=rid, user_id=user.id)
@@ -177,8 +187,10 @@ Conventional status codes used here:
 - `401` for auth failures (missing, invalid, or expired token)
 - `403` for authenticated-but-not-allowed (rare — prefer `404`)
 - `404` for missing resources
-- `422` for validation (FastAPI produces this automatically for Pydantic
-  failures — don't re-raise it manually)
+- `422` for validation. FastAPI produces it automatically for Pydantic
+  failures; raising it by hand is also correct — and expected — for
+  semantic validation the schema cannot express (`UPLOAD_EMPTY`,
+  `UPLOAD_UNSUPPORTED_FORMAT`, `NOTHING_TO_UPDATE`)
 - `503` when the blob store (S3/MinIO) is unavailable — uploads and
   downloads must fail loudly, never silently skip the blob
 
@@ -188,13 +200,15 @@ fine.
 ## Database and repositories
 
 SQLAlchemy 2.0 `Mapped[...]` style, async sessions, no sync ORM anywhere
-in the request path. The session dependency handles commit/rollback
-scoping implicitly per request — don't open a session manually from a
-handler.
+in the request path. The session dependency scopes one session per request
+and closes it at the end — don't open a session manually from a handler.
+It does **not** commit: whatever is left uncommitted is discarded on
+close.
 
 ```python
 engine = create_async_engine(DATABASE_URL, echo=False)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
@@ -229,10 +243,15 @@ async def create_user_with_email(
     return user
 ```
 
-Why `flush()` and not `commit()`: the session dependency commits on
-successful handler return; flushing is enough to populate defaults (IDs,
-timestamps) so the handler can reference them. That also means a later
-error can roll the whole request back atomically.
+Why `flush()` and not `commit()` inside a repository: flushing populates
+defaults (IDs, timestamps) so the handler can reference them while the
+transaction stays open, so a later error still rolls the whole request
+back atomically.
+
+**The commit is the handler's job.** Every handler that writes ends with
+`await session.commit()` before it builds the response — see `api/user.py`,
+`api/resumes.py`, `api/auth.py`. Forget it and the write is silently
+dropped when the session closes.
 
 For list endpoints, return `(items, total_count)` so the handler can build
 a paginated response without a second query.

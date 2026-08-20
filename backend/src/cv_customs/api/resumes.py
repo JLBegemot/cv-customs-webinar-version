@@ -109,9 +109,7 @@ def _require_s3(s3: S3Client | None) -> S3Client:
     return s3
 
 
-async def _load_resume(
-    session: AsyncSession, *, resume_id: str, user: User
-):
+async def _load_resume(session: AsyncSession, *, resume_id: str, user: User):
     try:
         rid = uuid.UUID(resume_id)
     except ValueError:
@@ -211,9 +209,7 @@ async def list_resumes(
     resumes, total = await repo.list_user_resumes(
         session, user_id=user.id, offset=page * PAGE, limit=PAGE
     )
-    return ResumeList(
-        items=[_file_out(r) for r in resumes], total=total, page=page
-    )
+    return ResumeList(items=[_file_out(r) for r in resumes], total=total, page=page)
 
 
 @router.get("/{resume_id}")
@@ -256,9 +252,7 @@ async def download_original(
     return Response(
         content=body,
         media_type=resume.mime,
-        headers={
-            "Content-Disposition": f'attachment; filename="{safe_name}"'
-        },
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
     )
 
 
@@ -277,9 +271,7 @@ async def delete_resume(
 ) -> None:
     resume = await _load_resume(session, resume_id=resume_id, user=user)
 
-    deleted = await repo.delete_resume(
-        session, resume_id=resume.id, user_id=user.id
-    )
+    deleted = await repo.delete_resume(session, resume_id=resume.id, user_id=user.id)
     if deleted is None:  # pragma: no cover — raced with another delete
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Resume not found")
 

@@ -217,5 +217,3 @@ async def login(
 
     token = create_access_token(user.id)
     return user_response(user, token)
-
-

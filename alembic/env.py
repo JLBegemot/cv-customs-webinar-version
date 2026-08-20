@@ -28,7 +28,9 @@ database_url = os.getenv("DATABASE_URL")
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 else:
-    print("!!! WARNING: DATABASE_URL is NOT SET. Alembic will use the placeholder from alembic.ini")
+    print(
+        "!!! WARNING: DATABASE_URL is NOT SET. Alembic will use the placeholder from alembic.ini"
+    )
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
