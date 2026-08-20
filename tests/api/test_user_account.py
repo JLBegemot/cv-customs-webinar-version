@@ -15,6 +15,11 @@
 
 Обе разрушающие ручки требуют явного ``confirm=true`` — тесты проверяют,
 что без него не только приходит 422, но и ничего не удаляется.
+
+``PATCH /api/user/me`` (частичное обновление профиля) покрыт отдельным
+блоком: смена email применяется сразу и меняет идентичность входа,
+занятость проверяется без учёта регистра, согласия идемпотентны, а отзыв
+основного согласия через PATCH запрещён — для него есть /revoke-consent.
 """
 
 from __future__ import annotations
@@ -95,6 +100,180 @@ async def test_me_never_exposes_the_password_hash(account_ctx):
     resp = account_ctx["client"].get("/api/user/me", headers=account_ctx["headers"])
     assert "password_hash" not in resp.json()
     assert "mfa_secret" not in resp.json()
+
+
+# ---------------------------------------------------------------------------
+# PATCH /api/user/me — частичное обновление профиля
+# ---------------------------------------------------------------------------
+
+
+async def _db_user(session_factory, user_id):
+    async with session_factory() as session:
+        return await repo.get_user_by_id(session, user_id)
+
+
+async def test_patch_me_changes_email_and_login_identity(
+    build_client, make_user, auth_headers, session_factory
+):
+    user_id = await make_user("bob@example.com", password="pw")
+    client = build_client()
+    headers = auth_headers(user_id)
+
+    resp = client.patch(
+        "/api/user/me",
+        headers={**headers, "X-Forwarded-For": "2.2.2.2"},
+        json={"email": "new-bob@example.com"},
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["email"] == "new-bob@example.com"
+
+    # Смена применяется сразу: старый email больше не логинится, новый — да.
+    old_login = client.post(
+        "/api/v1/auth/login", json={"email": "bob@example.com", "password": "pw"}
+    )
+    assert old_login.status_code == 401, old_login.text
+    new_login = client.post(
+        "/api/v1/auth/login", json={"email": "new-bob@example.com", "password": "pw"}
+    )
+    assert new_login.status_code == 200, new_login.text
+
+    rows = await _audit_rows(session_factory, "email_changed")
+    assert len(rows) == 1
+    assert rows[0].ip_address == "2.2.2.2"
+    assert "bob@example.com -> new-bob@example.com" in rows[0].details
+
+
+async def test_patch_me_rejects_taken_email_case_insensitive(account_ctx, make_user):
+    await make_user("taken@example.com", password=None)
+
+    resp = account_ctx["client"].patch(
+        "/api/user/me",
+        headers=account_ctx["headers"],
+        json={"email": "TAKEN@example.com"},
+    )
+    assert resp.status_code == 409, resp.text
+    assert resp.json()["detail"]["code"] == "EMAIL_TAKEN"
+
+    user = await _db_user(account_ctx["SessionLocal"], account_ctx["user_id"])
+    assert user.email == "alice@example.com"
+    assert await _audit_rows(account_ctx["SessionLocal"], "email_changed") == []
+
+
+async def test_patch_me_same_email_is_noop(account_ctx):
+    resp = account_ctx["client"].patch(
+        "/api/user/me",
+        headers=account_ctx["headers"],
+        json={"email": "ALICE@example.com"},
+    )
+    assert resp.status_code == 200, resp.text
+    # Регистр не считается изменением: email остаётся как был, аудита нет.
+    assert resp.json()["email"] == "alice@example.com"
+    assert await _audit_rows(account_ctx["SessionLocal"], "email_changed") == []
+
+
+async def test_patch_me_rejects_malformed_email(account_ctx):
+    resp = account_ctx["client"].patch(
+        "/api/user/me",
+        headers=account_ctx["headers"],
+        json={"email": "not-an-email"},
+    )
+    assert resp.status_code == 422, resp.text
+
+
+async def test_patch_me_grants_consent_once(
+    build_client, make_user, auth_headers, session_factory
+):
+    user_id = await make_user("fresh@example.com", password=None, consent=False)
+    client = build_client()
+    headers = auth_headers(user_id)
+
+    first = client.patch("/api/user/me", headers=headers, json={"consent": True})
+    assert first.status_code == 200, first.text
+    granted_at = first.json()["consent_given_at"]
+    assert granted_at is not None
+
+    user = await _db_user(session_factory, user_id)
+    assert user.consent_given_at is not None
+
+    # Канонический вид таймстемпа — из перечитанного профиля: SQLite не
+    # хранит таймзону, поэтому строка первого ответа (свежий tz-aware
+    # datetime) и строка после перечитывания из БД отличаются суффиксом
+    # ``+00:00``. Сверяем значения одного происхождения.
+    stored_at = client.get("/api/user/me", headers=headers).json()["consent_given_at"]
+
+    # Повторная выдача идемпотентна: таймстемп не сдвигается, аудит один.
+    second = client.patch("/api/user/me", headers=headers, json={"consent": True})
+    assert second.status_code == 200, second.text
+    assert second.json()["consent_given_at"] == stored_at
+
+    rows = await _audit_rows(session_factory, "consent_granted")
+    assert len(rows) == 1
+
+
+async def test_patch_me_cross_border_grant_and_revoke(account_ctx):
+    client, headers = account_ctx["client"], account_ctx["headers"]
+
+    grant = client.patch(
+        "/api/user/me", headers=headers, json={"cross_border_consent": True}
+    )
+    assert grant.status_code == 200, grant.text
+    assert grant.json()["cross_border_consent_at"] is not None
+    # См. комментарий про SQLite и таймзону в тесте выше: канонический
+    # таймстемп берётся перечитыванием профиля, а не из ответа grant.
+    granted_at = client.get("/api/user/me", headers=headers).json()[
+        "cross_border_consent_at"
+    ]
+
+    again = client.patch(
+        "/api/user/me", headers=headers, json={"cross_border_consent": True}
+    )
+    assert again.json()["cross_border_consent_at"] == granted_at
+
+    revoke = client.patch(
+        "/api/user/me", headers=headers, json={"cross_border_consent": False}
+    )
+    assert revoke.status_code == 200, revoke.text
+    assert revoke.json()["cross_border_consent_at"] is None
+
+    user = await _db_user(account_ctx["SessionLocal"], account_ctx["user_id"])
+    assert user.cross_border_consent_at is None
+
+    granted_rows = await _audit_rows(
+        account_ctx["SessionLocal"], "cross_border_consent_granted"
+    )
+    revoked_rows = await _audit_rows(
+        account_ctx["SessionLocal"], "cross_border_consent_revoked"
+    )
+    assert len(granted_rows) == 1
+    assert len(revoked_rows) == 1
+
+
+async def test_patch_me_forbids_primary_consent_revocation(account_ctx):
+    resp = account_ctx["client"].patch(
+        "/api/user/me", headers=account_ctx["headers"], json={"consent": False}
+    )
+    assert resp.status_code == 422, resp.text
+    detail = resp.json()["detail"]
+    assert detail["code"] == "CONSENT_REVOKE_FORBIDDEN"
+    assert "/api/user/revoke-consent" in detail["hint"]
+
+    # Отметка на месте, аккаунт жив, аудита нет.
+    user = await _db_user(account_ctx["SessionLocal"], account_ctx["user_id"])
+    assert user.consent_given_at is not None
+    assert await _audit_rows(account_ctx["SessionLocal"], "consent_revoked") == []
+
+
+async def test_patch_me_empty_body_is_422(account_ctx):
+    resp = account_ctx["client"].patch(
+        "/api/user/me", headers=account_ctx["headers"], json={}
+    )
+    assert resp.status_code == 422, resp.text
+    assert resp.json()["detail"]["code"] == "NOTHING_TO_UPDATE"
+
+
+async def test_patch_me_requires_auth(account_ctx):
+    resp = account_ctx["client"].patch("/api/user/me", json={"email": "x@example.com"})
+    assert resp.status_code == 401
 
 
 # ---------------------------------------------------------------------------
